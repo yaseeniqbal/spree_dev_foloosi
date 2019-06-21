@@ -6,7 +6,7 @@ Introduction goes here.
 
 1. Add this extension to your Gemfile with this line:
   ```ruby
-  gem 'spree_foloosi', github: '[your-github-handle]/spree_foloosi'
+  gem 'spree_foloosi', github: 'yaseen2211/spree_foloosi'
   ```
 
 2. Install the gem using Bundler:
