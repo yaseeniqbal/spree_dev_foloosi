@@ -11,27 +11,30 @@ module Spree
         result = hit
         order  = @order
 
-        ref   = result.parsed_response.dig("order","ref")
-        url   = result.parsed_response.dig("order","url")
-        error =  result.parsed_response.dig("error") || []
+        ref_token       = result.parsed_response.dig("data","reference_token")
+        payment_qr_data = result.parsed_response.dig("data","payment_qr_data")
+        payment_qr_url  = result.parsed_response.dig("data","payment_qr_url")
+        error =  result.parsed_response.dig("message") || []
 
-        if(url.blank? || ref.blank?)
-          flash[:error] = Spree.t('flash.generic_error', scope: 'telr', reasons: error.map{|k,v|k.to_s+':'+v.to_s}.join(','))
-          redirect_to checkout_state_path(:payment)
+        if(ref_token.blank?)
+          flash[:error] = error
+          render json: {errors: error}
         else
+          render json: {ref_token: ref_token, errors: []}
           order.payments.create!({
-            source: Spree::TelrCheckout.create({
-              ref: ref,
+            source: Spree::FoloosiCheckout.create({
+              ref: ref_token,
             }),
             amount: order.total,
             payment_method: payment_method
           })
-          redirect_to checkout_state_path(state: :payment,telr_url:url, pmi: params['payment_method_id'] )
+
+          # redirect_to checkout_state_path(state: :payment,telr_url:url, pmi: params['payment_method_id'] )
         end
         
       rescue => e
         flash[:error] = Spree.t('flash.connection_failed', scope: 'telr')
-        redirect_to checkout_state_path(:payment)
+        # redirect_to checkout_state_path(:payment)
       end
     end
 
@@ -65,14 +68,14 @@ module Spree
 
     def hit
       ::HTTParty.post("https://foloosi.com/api/v1/api/initialize-setup", 
-          :body => payload.to_json,
+          :body => payload,
           :headers => { 
                         'secret_key'   => 'test_$2y$10$HH0PlTdklWUYIV-ZeSzk9uoBvAgePca-wyiz1cjgjhv.GpH..wg-S'
                       } 
       )
     end
 
-    def iniatization_response
+    def iniatization_foloosi
     end
 
 
@@ -84,7 +87,7 @@ module Spree
     def payload
 
       {
-        redirect_url: "/iniatization_foloosi_response",
+        redirect_url: foloosi_v2_url,
         transaction_amount: @order.total,
         currency: 'AED'
       }
