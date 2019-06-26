@@ -20,7 +20,9 @@ module Spree
           flash[:error] = error
           render json: {errors: error}
         else
+
           render json: {ref_token: ref_token, errors: []}
+
           order.payments.create!({
             source: Spree::FoloosiCheckout.create({
               ref: ref_token,
@@ -31,6 +33,8 @@ module Spree
 
           # redirect_to checkout_state_path(state: :payment,telr_url:url, pmi: params['payment_method_id'] )
         end
+
+
         
       rescue => e
         flash[:error] = Spree.t('flash.connection_failed', scope: 'telr')
@@ -70,12 +74,21 @@ module Spree
       ::HTTParty.post("https://foloosi.com/api/v1/api/initialize-setup", 
           :body => payload,
           :headers => { 
-                        'secret_key'   => 'test_$2y$10$HH0PlTdklWUYIV-ZeSzk9uoBvAgePca-wyiz1cjgjhv.GpH..wg-S'
+                        'secret_key'   => 'test_$2y$10$1RWqUfB0barpcFsCqyA99O7QzzIRrQDcch2Yb6TGLp-QTMNeYznWu'
                       } 
       )
     end
 
-    def iniatization_foloosi
+    def transaction_updator
+      payment_trans_id    = params[:trans_id]
+      follosi_payment_obj = current_order.payments.last
+
+      if follosi_payment_obj.present?
+        follosi_payment_obj.source.update(transaction_id: payment_trans_id )
+        render json: {ref_token: follosi_payment_obj.source.ref, errors: []}
+      else
+        render json: {errors: ["No payment source found"]}
+      end
     end
 
 
