@@ -21,7 +21,7 @@ module Spree
           render json: {errors: error}
         else
 
-          render json: {ref_token: ref_token, errors: []}
+          render json: {ref_token: ref_token, errors: [], merchant_key: payment_method.try(:preferred_merchant_id) }
 
           order.payments.create!({
             source: Spree::FoloosiCheckout.create({
@@ -74,7 +74,7 @@ module Spree
       ::HTTParty.post("https://foloosi.com/api/v1/api/initialize-setup", 
           :body => payload,
           :headers => { 
-                        'secret_key'   => 'test_$2y$10$1RWqUfB0barpcFsCqyA99O7QzzIRrQDcch2Yb6TGLp-QTMNeYznWu'
+                        'secret_key'   => payment_method.try(:preferred_api_key)
                       } 
       )
     end
@@ -85,7 +85,7 @@ module Spree
 
       if follosi_payment_obj.present?
         follosi_payment_obj.source.update(transaction_id: payment_trans_id )
-        render json: {ref_token: follosi_payment_obj.source.ref, errors: []}
+        render json: {ref_token: follosi_payment_obj.source.ref, merchant_key: payment_method.try(:preferred_merchant_id), errors: []}
       else
         render json: {errors: ["No payment source found"]}
       end
