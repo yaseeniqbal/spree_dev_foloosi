@@ -11,7 +11,7 @@ module Spree
     attr_accessor :test
     preference :merchant_id, :string
     preference :api_key, :string
-    
+
     def provider_class
       ActiveMerchant::Billing::TelrGateway
     end
@@ -25,7 +25,8 @@ module Spree
     end
 
     def purchase(_money, telr_checkout, _options = {})
-      payload = { 
+
+      payload = {
         method: 'check',
         store: preferred_merchant_id,
         authkey: preferred_api_key,
@@ -34,40 +35,22 @@ module Spree
         }
       }
 
-      errors = telr_checkout.telr_errors||[]
+      errors = []
       ret = nil
 
       begin
-        result = ::HTTParty.post(URL, 
-          :body => payload.to_json,
-          :headers => { 'Content-Type' => 'application/json' } )
-
-        pp_response = result.parsed_response
-        errors << pp_response
-        error_msg = pp_response.dig("order","transaction","message").to_s
-        error_code = pp_response.dig("order","transaction","code").to_s
-        error_status = pp_response.dig("order","transaction","status").to_s
-
-        if pp_response.dig("order","status","code") == 3
-          transaction_id = pp_response.dig("order","transaction","ref")
-          raise 'ErrorCode:3 -> transaction id is missinge, cannot proceed' if transaction_id.blank?
-         
-          telr_checkout.update_column(:transaction_id, transaction_id)
-          ret = Class.new do
-            def success?; true; end
-            def authorization; nil; end
-          end.new
-        else
-          ret = ::ResponseClass.new error_code, error_msg, false
-        end
+        ret = Class.new do
+          def success?; true; end
+          def authorization; nil; end
+        end.new
       rescue => e
         errors << e.backtrace.join("\n\t")
         ret = ::ResponseClass.new '-99', 'ErrorCode:1 -> unknown error occured, please contact support', false
       end
 
-      telr_checkout.update_column(:telr_errors, errors)
+      # telr_checkout.update_column(:telr_errors, errors)
       ret
-      
+
     end
 
     def void(_response_code, _credit_card, _options = {})
@@ -88,11 +71,11 @@ class ResponseClass
   def initialize(error_code,error_msg, success)
     @error_code=error_code
     @error_msg=error_msg
-    @success = success 
+    @success = success
   end
 
   def success?
-   @success 
+   @success
   end
 
   def to_s
