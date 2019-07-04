@@ -74,7 +74,7 @@ module Spree
       ::HTTParty.post("https://foloosi.com/api/v1/api/initialize-setup", 
           :body => payload,
           :headers => { 
-                        'secret_key'   => payment_method.try(:preferred_api_key)
+                        'secret_key'   => payment_method.try(:preferred_merchant_id)
                       } 
       )
     end
