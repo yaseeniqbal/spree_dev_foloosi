@@ -83,7 +83,7 @@ class ResponseClass
   end
 end
 
-# require 'nokogiri'
+require 'nokogiri'
 
 # module ActiveMerchant #:nodoc:
 #   module Billing #:nodoc:
