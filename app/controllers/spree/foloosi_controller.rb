@@ -1,4 +1,4 @@
-require 'httparty'
+
 
 module Spree
   class FoloosiController < StoreController
