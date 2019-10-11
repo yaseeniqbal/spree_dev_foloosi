@@ -85,6 +85,7 @@ module Spree
 
       if follosi_payment_obj.present?
         follosi_payment_obj.source.update(transaction_id: payment_trans_id )
+        follosi_payment_obj.complete
         render json: {ref_token: follosi_payment_obj.source.ref, merchant_key: payment_method.try(:preferred_merchant_id), errors: []}
       else
         render json: {errors: ["No payment source found"]}
